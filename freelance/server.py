@@ -34,9 +34,13 @@ def analyze(title, description, rate):
         ('اپلیکیشن', ['اندروید', 'اپلیکیشن', 'ios', 'فلاتر'], 40, 60),
     ]
     category, hours, score = 'نیازمند بررسی', 12, 35
-    for name, words, h, s in rules:
-        if any(word in text for word in words):
-            category, hours, score = name, h, s
+    title_text = title.lower().replace('ي', 'ی').replace('ك', 'ک')
+    # Prefer explicit task intent in the title over incidental skills in the card body.
+    intent_rules = [rules[2], rules[3], rules[1], rules[0]]
+    for scope, candidates in ((title_text, intent_rules), (text, rules)):
+        match = next((rule for rule in candidates if any(word in scope for word in rule[1])), None)
+        if match:
+            category, _, hours, score = match
             break
     if any(word in text for word in ['حضوری', 'فیلمبرداری', 'سخت‌افزار', 'تضمین رتبه', 'تضمین سود']):
         score = min(score, 20)
@@ -229,7 +233,8 @@ if __name__ == '__main__':
         raise SystemExit('Hosted mode requires KARNAMA_PASSWORD >=16 and SESSION_SECRET >=32 characters.')
     database().close()
     MONITOR = Monitor(database, add_job)
-    MONITOR.start()
     port = int(os.environ.get('PORT','8000'))
+    server = ThreadingHTTPServer(('0.0.0.0',port),Handler)
+    MONITOR.start()
     print(f'Freelance workspace listening on 0.0.0.0:{port}',flush=True)
-    ThreadingHTTPServer(('0.0.0.0',port),Handler).serve_forever()
+    server.serve_forever()
