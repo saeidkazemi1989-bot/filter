@@ -1,0 +1,6 @@
+.git
+**/__pycache__
+freelance/data
+.env
+**/build
+.gradle
