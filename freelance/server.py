@@ -138,6 +138,10 @@ class Handler(BaseHTTPRequestHandler):
         if not auth.valid(self.headers):
             if path.startswith('/api/'): return self.send({'error':'ورود به فضای کاری لازم است.'},401)
             return self.send(auth.LOGIN.encode(),content_type='text/html; charset=utf-8')
+        if path == '/download/android.apk':
+            apk = ROOT.parent / 'downloads' / 'karnama-0.2.0-debug.apk'
+            if not apk.is_file(): return self.send({'error':'فایل APK هنوز در این میزبان قرار نگرفته است.'},404)
+            return self.send(apk.read_bytes(), content_type='application/vnd.android.package-archive', filename=apk.name)
         if path == '/api/monitor':
             return self.send(MONITOR.state() if MONITOR else {'status':'unavailable','message':'پایشگر در این اجرا فعال نیست.'})
         if path == '/api/jobs':

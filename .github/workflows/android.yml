@@ -5,7 +5,7 @@ on:
     branches: [arena/01a0e415-filter]
     paths: ['androidApp/**', '*.gradle.kts', 'gradle.properties', '.github/workflows/android.yml']
 permissions:
-  contents: read
+  contents: write # Publish the user-requested standalone APK on the session branch only.
 jobs:
   apk:
     runs-on: ubuntu-24.04
@@ -55,3 +55,16 @@ jobs:
               message = str(error).replace('%', '%25').replace('\n', '%0A')
               print('::warning title=Public source not verified::' + message)
           PYTHON
+      - name: Publish standalone APK on the session branch
+        if: github.ref == 'refs/heads/arena/01a0e415-filter'
+        run: |
+          mkdir -p downloads
+          cp androidApp/build/outputs/apk/debug/androidApp-debug.apk downloads/karnama-0.2.0-debug.apk
+          sha256sum downloads/karnama-0.2.0-debug.apk > downloads/karnama-0.2.0-debug.apk.sha256
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add downloads/karnama-0.2.0-debug.apk downloads/karnama-0.2.0-debug.apk.sha256
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish requested standalone Android APK"
+            git push origin HEAD:arena/01a0e415-filter
+          fi
