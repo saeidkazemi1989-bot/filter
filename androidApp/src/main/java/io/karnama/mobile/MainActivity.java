@@ -28,10 +28,10 @@ public class MainActivity extends Activity {
         if(base.isEmpty()) configure(); else open();
     }
     private void configure() {
-        LinearLayout layout=new LinearLayout(this); layout.setOrientation(1);layout.setPadding(32,70,32,32);layout.setFitsSystemWindows(true);
+        LinearLayout layout=new LinearLayout(this); layout.setOrientation(LinearLayout.VERTICAL);layout.setPadding(32,70,32,32);layout.setFitsSystemWindows(true);
         TextView title=new TextView(this);title.setText("کارنما — اتصال به میزبان شما");title.setTextSize(23);layout.addView(title);
         TextView info=new TextView(this);info.setText("آدرس HTTPS سروری که کارنما روی آن نصب شده را وارد کنید. رمز کارلنسر لازم نیست. پایش روی میزبان انجام می‌شود؛ گوشی فقط نتایج را دریافت می‌کند.");info.setPadding(0,25,0,25);layout.addView(info);
-        EditText address=new EditText(this);address.setSingleLine();address.setHint("https://karnama.example.com");address.setText(base);address.setInputType(17);layout.addView(address);
+        EditText address=new EditText(this);address.setSingleLine();address.setHint("https://karnama.example.com");address.setText(base);address.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_URI);layout.addView(address);
         Button save=new Button(this);save.setText("اتصال امن");layout.addView(save);
         save.setOnClickListener(v->{
             try {
@@ -53,7 +53,7 @@ public class MainActivity extends Activity {
         try {startActivity(new Intent(Intent.ACTION_VIEW,uri));}catch(Exception e){Toast.makeText(this,"مرورگری برای بازکردن لینک پیدا نشد.",Toast.LENGTH_LONG).show();}
     }
     private void open() {
-        LinearLayout layout=new LinearLayout(this);layout.setOrientation(1);layout.setFitsSystemWindows(true);
+        LinearLayout layout=new LinearLayout(this);layout.setOrientation(LinearLayout.VERTICAL);layout.setFitsSystemWindows(true);
         Button settings=new Button(this);settings.setText("کارنما  •  تغییر میزبان / تنظیم اتصال");settings.setOnClickListener(v->{if(web!=null){web.destroy();web=null;}configure();});layout.addView(settings);
         web=new WebView(this);web.getSettings().setJavaScriptEnabled(true);web.getSettings().setDomStorageEnabled(true);
         web.getSettings().setAllowFileAccess(false);web.getSettings().setAllowContentAccess(false);
