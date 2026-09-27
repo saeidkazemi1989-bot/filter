@@ -45,6 +45,18 @@ class AppTests(unittest.TestCase):
             req=urllib.request.Request(self.base+'/api/jobs',headers={'Cookie':cookie.split(';')[0]})
             with urllib.request.urlopen(req) as response:self.assertEqual(response.status,200)
 
+    def test_direct_apk_download_headers_and_missing_file(self):
+        root=Path(self.tmp.name)/'freelance'
+        with patch.object(s, 'ROOT', root):
+            self.assertEqual(self.request('/download/android.apk')[0],404)
+            folder=root.parent/'downloads';folder.mkdir()
+            content=b'APK test fixture, not an installable APK'
+            (folder/'karnama-0.2.0-debug.apk').write_bytes(content)
+            with urllib.request.urlopen(self.base+'/download/android.apk') as response:
+                self.assertEqual(response.headers['Content-Type'],'application/vnd.android.package-archive')
+                self.assertIn('karnama-0.2.0-debug.apk',response.headers['Content-Disposition'])
+                self.assertEqual(response.read(),content)
+
     def test_initial_empty_and_import(self):
         self.assertEqual(json.loads(self.request('/api/jobs')[1]), [])
         self.job()
