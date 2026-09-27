@@ -5,6 +5,7 @@ import threading
 import unittest
 import urllib.request
 import urllib.error
+from unittest.mock import patch
 from pathlib import Path
 
 spec = importlib.util.spec_from_file_location('server', Path(__file__).parents[1] / 'server.py')
@@ -32,6 +33,18 @@ class AppTests(unittest.TestCase):
         code, body = self.request('/api/jobs', {'title':'طراحی سایت', 'description':'یک سایت فارسی با طراحی واکنش‌گرا برای معرفی محصولات نیاز داریم.'})
         self.assertEqual(code, 201)
         return json.loads(body)['ids'][0]
+    def test_hosted_auth_gates_data_and_issues_secure_cookie(self):
+        with patch.object(s.auth, 'PASSWORD', 'a-long-test-password'), patch.object(s.auth, 'SECRET', 'test-secret-only'):
+            self.assertEqual(self.request('/api/jobs')[0],401)
+            self.assertIn('ورود به کارنما', self.request('/')[1].decode())
+            self.assertEqual(self.request('/api/login',{'password':'wrong'})[0],401)
+            req=urllib.request.Request(self.base+'/api/login',data=json.dumps({'password':'a-long-test-password'}).encode(),headers={'Content-Type':'application/json'})
+            with urllib.request.urlopen(req) as response:
+                cookie=response.headers['Set-Cookie']
+                self.assertIn('HttpOnly',cookie);self.assertIn('Secure',cookie);self.assertIn('SameSite=Strict',cookie)
+            req=urllib.request.Request(self.base+'/api/jobs',headers={'Cookie':cookie.split(';')[0]})
+            with urllib.request.urlopen(req) as response:self.assertEqual(response.status,200)
+
     def test_initial_empty_and_import(self):
         self.assertEqual(json.loads(self.request('/api/jobs')[1]), [])
         self.job()

@@ -20,7 +20,21 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - run: gradle :androidApp:assembleDebug :androidApp:lintDebug --no-daemon
+      - name: Build and lint Android
+        run: |
+          set -o pipefail
+          gradle :androidApp:assembleDebug :androidApp:lintDebug --no-daemon --console=plain 2>&1 | tee /tmp/android-build.log
+      - name: Report build diagnostics
+        if: failure()
+        run: |
+          python3 - <<'PYTHON'
+          from pathlib import Path
+          log = Path('/tmp/android-build.log')
+          if log.exists():
+              text = log.read_text()[-14000:]
+              text = text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+              print('::error title=Android build diagnostics::' + text)
+          PYTHON
       - uses: actions/upload-artifact@v4
         with:
           name: karnama-android-debug
